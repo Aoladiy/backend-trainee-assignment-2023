@@ -6,18 +6,18 @@ import (
 	"github.com/Aoladiy/backend-trainee-assignment-2023/pkg/repository"
 	"github.com/Aoladiy/backend-trainee-assignment-2023/pkg/service"
 	"github.com/joho/godotenv"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"log"
 	"os"
 )
 
 func main() {
 	if err := initConfig(); err != nil {
-		log.Fatalf("config initialization error %v", err)
+		logrus.Fatalf("config initialization error %v", err)
 	}
 
 	if err := godotenv.Load(); err != nil {
-		log.Fatalf("env variables loading error %v", err)
+		logrus.Fatalf("env variables loading error %v", err)
 	}
 
 	db, err := repository.NewMysqlDB(repository.Config{
@@ -28,7 +28,7 @@ func main() {
 		DBName:   viper.GetString("db.dbName"),
 	})
 	if err != nil {
-		log.Fatalf("DB initialization error %v", err)
+		logrus.Fatalf("DB initialization error %v", err)
 	}
 
 	repos := repository.NewRepository(db)
@@ -37,7 +37,7 @@ func main() {
 
 	server := new(backendTraineeAssignment2023.Server)
 	if err := server.Run(viper.GetString("port"), handlers.InitRoutes()); err != nil {
-		log.Fatalf("Http server error %v", err)
+		logrus.Fatalf("Http server error %v", err)
 	}
 
 }

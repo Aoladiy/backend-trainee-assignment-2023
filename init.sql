@@ -1,7 +1,8 @@
+create database if not exists dockermysql;
 use dockermysql;
-drop table if exists users;
-drop table if exists segments;
 drop table if exists segments_users;
+drop table if exists segments;
+drop table if exists users;
 create table users
 (
     id int(15) not null auto_increment,
@@ -10,7 +11,7 @@ create table users
 create table segments
 (
     id   int(15)      not null auto_increment,
-    slug varchar(255) not null,
+    slug varchar(255) not null unique,
     primary key (id)
 );
 create table segments_users

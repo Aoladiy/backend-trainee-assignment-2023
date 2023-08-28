@@ -1,11 +1,18 @@
 package service
 
-import "github.com/Aoladiy/backend-trainee-assignment-2023/pkg/repository"
+import (
+	backendTraineeAssignment2023 "github.com/Aoladiy/backend-trainee-assignment-2023"
+	"github.com/Aoladiy/backend-trainee-assignment-2023/pkg/repository"
+)
 
 type User interface {
+	CreateUser(user backendTraineeAssignment2023.User) (int, error)
+	DeleteUser(id int) (int, error)
 }
 
 type Segment interface {
+	CreateSegment(segment backendTraineeAssignment2023.Segment) (string, error)
+	DeleteSegment(slug string) (string, error)
 }
 type Service struct {
 	User
@@ -13,5 +20,8 @@ type Service struct {
 }
 
 func NewService(repos *repository.Repository) *Service {
-	return &Service{}
+	return &Service{
+		User:    NewUserService(repos.User),
+		Segment: NewSegmentService(repos.Segment),
+	}
 }
