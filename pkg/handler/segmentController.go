@@ -1,16 +1,37 @@
 package handler
 
 import (
+	"fmt"
 	backendTraineeAssignment2023 "github.com/Aoladiy/backend-trainee-assignment-2023"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
 func (h *Handler) getAllSegments(c *gin.Context) {
-
+	segments, err := h.services.GetAllSegments()
+	if err != nil {
+		NewErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	c.JSON(http.StatusOK, map[string]interface{}{
+		"message": segments,
+	})
 }
 func (h *Handler) getSegmentBySlug(c *gin.Context) {
-
+	slug := c.Param("slug")
+	status, segment, err := h.services.GetSegmentBySlug(slug)
+	if err != nil {
+		NewErrorResponse(c, http.StatusInternalServerError, err.Error())
+	}
+	if status {
+		c.JSON(http.StatusOK, map[string]interface{}{
+			"message": segment,
+		})
+	} else {
+		c.JSON(http.StatusOK, map[string]interface{}{
+			"message": fmt.Sprintf("there's no segment with slug=%v", slug),
+		})
+	}
 }
 func (h *Handler) createSegment(c *gin.Context) {
 	var input backendTraineeAssignment2023.Segment

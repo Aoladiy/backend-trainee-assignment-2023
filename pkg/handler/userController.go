@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	backendTraineeAssignment2023 "github.com/Aoladiy/backend-trainee-assignment-2023"
 	"github.com/gin-gonic/gin"
 	"io"
@@ -9,10 +10,34 @@ import (
 )
 
 func (h *Handler) getAllUsers(c *gin.Context) {
-
+	users, err := h.services.GetAllUsers()
+	if err != nil {
+		NewErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	c.JSON(http.StatusOK, map[string]interface{}{
+		"message": users,
+	})
 }
 func (h *Handler) getUserById(c *gin.Context) {
-
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		NewErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	status, user, err := h.services.GetUserById(id)
+	if err != nil {
+		NewErrorResponse(c, http.StatusInternalServerError, err.Error())
+	}
+	if status {
+		c.JSON(http.StatusOK, map[string]interface{}{
+			"message": user,
+		})
+	} else {
+		c.JSON(http.StatusOK, map[string]interface{}{
+			"message": fmt.Sprintf("there's no user with id=%v", id),
+		})
+	}
 }
 func (h *Handler) getUserSegments(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
