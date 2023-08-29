@@ -38,7 +38,7 @@ func (h *Handler) createSegment(c *gin.Context) {
 				return
 			}
 			c.JSON(http.StatusOK, map[string]interface{}{
-				"slug": slug,
+				"message": slug,
 			})
 		}
 	}

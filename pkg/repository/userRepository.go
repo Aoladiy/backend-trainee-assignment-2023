@@ -20,14 +20,9 @@ func NewUserRepository(db *sqlx.DB) *UserRepository {
 func (r *UserRepository) GetUserSegments(id int) ([]string, error) {
 	var segments []string
 
-	checkQuery := fmt.Sprintf("SELECT COUNT(*) FROM %v WHERE id=?", usersTable)
-	var count int
-	err := r.db.Get(&count, checkQuery, id)
-	if err != nil {
+	if exists, err := r.userExists(id); err != nil {
 		return []string{""}, err
-	}
-
-	if count == 0 {
+	} else if !exists {
 		return []string{fmt.Sprintf("there's no user with this id='%v'", id)}, nil
 	}
 
@@ -72,19 +67,14 @@ func (r *UserRepository) CreateUser(user backendTraineeAssignment2023.User) (int
 }
 
 func (r *UserRepository) DeleteUser(id int) (string, error) {
-	checkQuery := fmt.Sprintf("SELECT COUNT(*) FROM %v WHERE id=?", usersTable)
-	var count int
-	err := r.db.Get(&count, checkQuery, id)
-	if err != nil {
+	if exists, err := r.userExists(id); err != nil {
 		return "", err
-	}
-
-	if count == 0 {
+	} else if !exists {
 		return fmt.Sprintf("there's no user with this id='%v'", id), nil
 	}
 
 	query := fmt.Sprintf("DELETE FROM %v WHERE id=?", usersTable)
-	_, err = r.db.Exec(query, id)
+	_, err := r.db.Exec(query, id)
 	if err != nil {
 		return "", err
 	}
@@ -93,15 +83,10 @@ func (r *UserRepository) DeleteUser(id int) (string, error) {
 }
 
 func (r *UserRepository) UpdateUserById(slugsToJoin []string, slugsToLeave []string, id int) (bool, string, error) {
-	checkQuery := fmt.Sprintf("SELECT COUNT(*) FROM %v WHERE id=?", usersTable)
-	var count int
-	err := r.db.Get(&count, checkQuery, id)
-	if err != nil {
+	if exists, err := r.userExists(id); err != nil {
 		return false, "fail", err
-	}
-
-	if count == 0 {
-		return false, fmt.Sprintf("there's no user with id='%v'", id), err
+	} else if !exists {
+		return false, fmt.Sprintf("there's no user with this id='%v'", id), nil
 	}
 
 	if len(slugsToJoin) == 0 && len(slugsToLeave) == 0 {
@@ -179,6 +164,7 @@ func (r *UserRepository) getSegmentIDBySlug(tx *sql.Tx, slug string) (int, error
 	}
 	return segmentID, nil
 }
+
 func (r *UserRepository) checkSegmentUserAssociation(tx *sql.Tx, userID, segmentID int) (bool, error) {
 	var exists bool
 	err := tx.QueryRow("SELECT EXISTS (SELECT 1 FROM segments_users WHERE user_id = ? AND segment_id = ?)", userID, segmentID).Scan(&exists)
@@ -186,4 +172,19 @@ func (r *UserRepository) checkSegmentUserAssociation(tx *sql.Tx, userID, segment
 		return false, err
 	}
 	return exists, nil
+}
+
+func (r *UserRepository) userExists(id int) (bool, error) {
+	checkQuery := fmt.Sprintf("SELECT COUNT(*) FROM %v WHERE id=?", usersTable)
+	var count int
+	err := r.db.Get(&count, checkQuery, id)
+	if err != nil {
+		return false, err
+	}
+
+	if count == 0 {
+		return false, nil
+	} else {
+		return true, nil
+	}
 }
