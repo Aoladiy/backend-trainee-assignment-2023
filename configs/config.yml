@@ -1,0 +1,7 @@
+port: "8000"
+
+db:
+  username: "root"
+  host: "db"
+  port: "3306"
+  dbName: "dockermysql"

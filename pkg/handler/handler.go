@@ -1,8 +1,16 @@
 package handler
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/Aoladiy/backend-trainee-assignment-2023/pkg/service"
+	"github.com/gin-gonic/gin"
+)
 
 type Handler struct {
+	services *service.Service
+}
+
+func NewHandler(services *service.Service) *Handler {
+	return &Handler{services: services}
 }
 
 func (h *Handler) InitRoutes() *gin.Engine {
@@ -21,6 +29,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 		{
 			users.GET("/", h.getAllUsers)
 			users.GET("/:id", h.getUserById)
+			users.GET("/:id/segments", h.getUserSegments)
 			users.POST("/", h.createUser)
 			users.PUT("/:id", h.updateUserById)
 			users.DELETE("/:id", h.deleteUserById)
