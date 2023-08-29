@@ -15,8 +15,19 @@ func NewSegmentRepository(db *sqlx.DB) *SegmentRepository {
 }
 
 func (r *SegmentRepository) CreateSegment(segment backendTraineeAssignment2023.Segment) (string, error) {
+	checkQuery := fmt.Sprintf("SELECT COUNT(*) FROM %v WHERE slug=?", segmentsTable)
+	var count int
+	err := r.db.Get(&count, checkQuery, segment.Slug)
+	if err != nil {
+		return "", err
+	}
+
+	if count > 0 {
+		return fmt.Sprintf("segment with this slug='%v' already exists", segment.Slug), nil
+	}
+
 	query := fmt.Sprintf("INSERT INTO %v (slug) VALUES (?)", segmentsTable)
-	_, err := r.db.Exec(query, segment.Slug)
+	_, err = r.db.Exec(query, segment.Slug)
 	if err != nil {
 		return "", err
 	}
@@ -24,12 +35,23 @@ func (r *SegmentRepository) CreateSegment(segment backendTraineeAssignment2023.S
 	return segment.Slug, nil
 }
 
-func (r *SegmentRepository) DeleteSegment(slug string) (string, error) {
-	query := fmt.Sprintf("DELETE FROM %v WHERE slug=?", segmentsTable)
-	_, err := r.db.Exec(query, slug)
+func (r *SegmentRepository) DeleteSegment(slug string) (bool, string, error) {
+	checkQuery := fmt.Sprintf("SELECT COUNT(*) FROM %v WHERE slug=?", segmentsTable)
+	var count int
+	err := r.db.Get(&count, checkQuery, slug)
 	if err != nil {
-		return "", err
+		return false, "", err
 	}
 
-	return slug, nil
+	if count == 0 {
+		return false, fmt.Sprintf("there's no segment with this slug='%v'", slug), nil
+	}
+
+	query := fmt.Sprintf("DELETE FROM %v WHERE slug=?", segmentsTable)
+	_, err = r.db.Exec(query, slug)
+	if err != nil {
+		return false, "", err
+	}
+
+	return true, slug, nil
 }

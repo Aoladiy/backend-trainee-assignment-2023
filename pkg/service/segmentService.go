@@ -17,6 +17,6 @@ func (s *SegmentService) CreateSegment(segment backendTraineeAssignment2023.Segm
 	return s.repo.CreateSegment(segment)
 }
 
-func (s *SegmentService) DeleteSegment(slug string) (string, error) {
+func (s *SegmentService) DeleteSegment(slug string) (bool, string, error) {
 	return s.repo.DeleteSegment(slug)
 }

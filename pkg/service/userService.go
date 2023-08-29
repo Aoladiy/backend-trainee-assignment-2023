@@ -17,6 +17,6 @@ func (s *UserService) CreateUser(user backendTraineeAssignment2023.User) (int, e
 	return s.repo.CreateUser(user)
 }
 
-func (s *UserService) DeleteUser(id int) (int, error) {
+func (s *UserService) DeleteUser(id int) (string, error) {
 	return s.repo.DeleteUser(id)
 }

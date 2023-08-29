@@ -17,8 +17,10 @@ func (h *Handler) createUser(c *gin.Context) {
 	var input backendTraineeAssignment2023.User
 
 	if err := c.BindJSON(&input); err != nil {
-		NewErrorResponse(c, http.StatusBadRequest, err.Error())
-		return
+		if err.Error() != "EOF" {
+			NewErrorResponse(c, http.StatusBadRequest, err.Error())
+			return
+		}
 	}
 
 	id, err := h.services.CreateUser(input)
@@ -39,13 +41,19 @@ func (h *Handler) deleteUserById(c *gin.Context) {
 		NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	
-	id, err = h.services.DeleteUser(id)
+
+	message, err := h.services.DeleteUser(id)
 	if err != nil {
 		NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, map[string]interface{}{
-		"id": id,
-	})
+	if id, err = strconv.Atoi(message); err != nil {
+		c.JSON(http.StatusOK, map[string]interface{}{
+			"message": message,
+		})
+	} else {
+		c.JSON(http.StatusOK, map[string]interface{}{
+			"id": id,
+		})
+	}
 }
