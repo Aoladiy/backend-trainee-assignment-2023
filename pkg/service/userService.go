@@ -20,3 +20,7 @@ func (s *UserService) CreateUser(user backendTraineeAssignment2023.User) (int, e
 func (s *UserService) DeleteUser(id int) (string, error) {
 	return s.repo.DeleteUser(id)
 }
+
+func (s *UserService) UpdateUserById(slugsToJoin []string, slugsToLeave []string, id int) (bool, string, error) {
+	return s.repo.UpdateUserById(slugsToJoin, slugsToLeave, id)
+}

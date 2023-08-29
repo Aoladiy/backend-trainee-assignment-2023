@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	backendTraineeAssignment2023 "github.com/Aoladiy/backend-trainee-assignment-2023"
 	"github.com/jmoiron/sqlx"
@@ -51,4 +53,100 @@ func (r *UserRepository) DeleteUser(id int) (string, error) {
 	}
 
 	return strconv.Itoa(id), nil
+}
+
+func (r *UserRepository) UpdateUserById(slugsToJoin []string, slugsToLeave []string, id int) (bool, string, error) {
+	checkQuery := fmt.Sprintf("SELECT COUNT(*) FROM %v WHERE id=?", usersTable)
+	var count int
+	err := r.db.Get(&count, checkQuery, id)
+	if err != nil {
+		return false, "fail", err
+	}
+
+	if count == 0 {
+		return false, fmt.Sprintf("there's no user with id='%v'", id), err
+	}
+
+	if len(slugsToJoin) == 0 && len(slugsToLeave) == 0 {
+		return true, "success (Nothing changed, did you really wanted it?)", nil
+	}
+	tx, err := r.db.Begin()
+	if err != nil {
+		return false, "fail", err
+	}
+
+	for _, slug := range slugsToJoin {
+		segmentID, err := r.getSegmentIDBySlug(tx, slug)
+		if err != nil {
+			tx.Rollback()
+			return false, "fail", err
+		}
+
+		if segmentID == 0 {
+			tx.Rollback()
+			return false, fmt.Sprintf("there's no segments to join with slug='%v'", slug), nil
+		}
+
+		exists, err := r.checkSegmentUserAssociation(tx, id, segmentID)
+		if err != nil {
+			tx.Rollback()
+			return false, "fail", err
+		}
+
+		if !exists {
+			query := fmt.Sprintf("INSERT INTO %v (user_id, segment_id) VALUES (?, ?)", segmentsUsersTable)
+			_, err = tx.Exec(query, id, segmentID)
+			if err != nil {
+				tx.Rollback()
+				return false, "fail", err
+			}
+		}
+	}
+
+	for _, slug := range slugsToLeave {
+		segmentID, err := r.getSegmentIDBySlug(tx, slug)
+		if err != nil {
+			tx.Rollback()
+			return false, "fail", err
+		}
+
+		if segmentID == 0 {
+			tx.Rollback()
+			return false, fmt.Sprintf("there's no segments to leave with slug='%v'", slug), nil
+		}
+
+		query := fmt.Sprintf("DELETE FROM %v WHERE user_id = ? AND segment_id = ?", segmentsUsersTable)
+		_, err = tx.Exec(query, id, segmentID)
+		if err != nil {
+			tx.Rollback()
+			return false, "fail", err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		tx.Rollback()
+		return false, "fail", err
+	}
+
+	return true, "success", nil
+}
+
+func (r *UserRepository) getSegmentIDBySlug(tx *sql.Tx, slug string) (int, error) {
+	var segmentID int
+	err := tx.QueryRow("SELECT id FROM segments WHERE slug = ?", slug).Scan(&segmentID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, nil
+		}
+		return 0, err
+	}
+	return segmentID, nil
+}
+func (r *UserRepository) checkSegmentUserAssociation(tx *sql.Tx, userID, segmentID int) (bool, error) {
+	var exists bool
+	err := tx.QueryRow("SELECT EXISTS (SELECT 1 FROM segments_users WHERE user_id = ? AND segment_id = ?)", userID, segmentID).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
 }
