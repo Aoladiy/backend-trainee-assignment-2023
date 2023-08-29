@@ -9,6 +9,7 @@ type User interface {
 	CreateUser(user backendTraineeAssignment2023.User) (int, error)
 	DeleteUser(id int) (string, error)
 	UpdateUserById(slugsToJoin []string, slugsToLeave []string, id int) (bool, string, error)
+	GetUserSegments(id int) ([]string, error)
 }
 
 type Segment interface {

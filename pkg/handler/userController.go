@@ -14,6 +14,22 @@ func (h *Handler) getAllUsers(c *gin.Context) {
 func (h *Handler) getUserById(c *gin.Context) {
 
 }
+func (h *Handler) getUserSegments(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		NewErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	message, err := h.services.GetUserSegments(id)
+	if err != nil {
+		NewErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	c.JSON(http.StatusOK, map[string]interface{}{
+		"message": message,
+	})
+}
 func (h *Handler) createUser(c *gin.Context) {
 	var input backendTraineeAssignment2023.User
 

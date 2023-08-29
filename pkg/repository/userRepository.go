@@ -17,6 +17,43 @@ func NewUserRepository(db *sqlx.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
+func (r *UserRepository) GetUserSegments(id int) ([]string, error) {
+	var segments []string
+
+	checkQuery := fmt.Sprintf("SELECT COUNT(*) FROM %v WHERE id=?", usersTable)
+	var count int
+	err := r.db.Get(&count, checkQuery, id)
+	if err != nil {
+		return []string{""}, err
+	}
+
+	if count == 0 {
+		return []string{fmt.Sprintf("there's no user with this id='%v'", id)}, nil
+	}
+
+	query := fmt.Sprintf("SELECT s.slug FROM %v s JOIN %v su ON s.id = su.segment_id WHERE su.user_id = ?", segmentsTable, segmentsUsersTable)
+	rows, err := r.db.Query(query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var segmentSlug string
+		err := rows.Scan(&segmentSlug)
+		if err != nil {
+			return nil, err
+		}
+		segments = append(segments, segmentSlug)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return segments, nil
+}
+
 func (r *UserRepository) CreateUser(user backendTraineeAssignment2023.User) (int, error) {
 	query := fmt.Sprintf("INSERT INTO %v VALUES ()", usersTable)
 	_, err := r.db.Exec(query)

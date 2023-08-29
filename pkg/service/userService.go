@@ -24,3 +24,6 @@ func (s *UserService) DeleteUser(id int) (string, error) {
 func (s *UserService) UpdateUserById(slugsToJoin []string, slugsToLeave []string, id int) (bool, string, error) {
 	return s.repo.UpdateUserById(slugsToJoin, slugsToLeave, id)
 }
+func (s *UserService) GetUserSegments(id int) ([]string, error) {
+	return s.repo.GetUserSegments(id)
+}
