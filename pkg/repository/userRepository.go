@@ -17,6 +17,50 @@ func NewUserRepository(db *sqlx.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
+func (r *UserRepository) GetAllUsers() ([]backendTraineeAssignment2023.User, error) {
+	var users []backendTraineeAssignment2023.User
+	query := fmt.Sprintf("SELECT * FROM %v", usersTable)
+
+	rows, err := r.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var user backendTraineeAssignment2023.User
+		var userId int
+		err := rows.Scan(&userId)
+		if err != nil {
+			return nil, err
+		}
+		user.Id = userId
+		users = append(users, user)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
+func (r *UserRepository) GetUserById(id int) (bool, backendTraineeAssignment2023.User, error) {
+	if exists, err := r.userExists(id); err != nil {
+		return false, backendTraineeAssignment2023.User{}, err
+	} else if !exists {
+		return false, backendTraineeAssignment2023.User{}, nil
+	}
+
+	var user backendTraineeAssignment2023.User
+	query := fmt.Sprintf("SELECT * FROM %v WHERE id=?", usersTable)
+	err := r.db.Get(&user, query, id)
+	if err != nil {
+		return false, user, err
+	}
+
+	return true, user, nil
+}
+
 func (r *UserRepository) GetUserSegments(id int) ([]string, error) {
 	var segments []string
 

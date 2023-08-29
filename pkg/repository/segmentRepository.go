@@ -14,6 +14,51 @@ func NewSegmentRepository(db *sqlx.DB) *SegmentRepository {
 	return &SegmentRepository{db: db}
 }
 
+func (r *SegmentRepository) GetAllSegments() ([]backendTraineeAssignment2023.Segment, error) {
+	var segments []backendTraineeAssignment2023.Segment
+	query := fmt.Sprintf("SELECT * FROM %v", segmentsTable)
+
+	rows, err := r.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var segment backendTraineeAssignment2023.Segment
+		var segmentSlug string
+		var segmentID int
+		err := rows.Scan(&segmentID, &segmentSlug)
+		if err != nil {
+			return nil, err
+		}
+		segment.Slug = segmentSlug
+		segments = append(segments, segment)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return segments, nil
+}
+
+func (r *SegmentRepository) GetSegmentBySlug(slug string) (bool, backendTraineeAssignment2023.Segment, error) {
+	if exists, err := r.segmentExists(slug); err != nil {
+		return false, backendTraineeAssignment2023.Segment{}, err
+	} else if !exists {
+		return false, backendTraineeAssignment2023.Segment{}, nil
+	}
+
+	var segment backendTraineeAssignment2023.Segment
+	query := fmt.Sprintf("SELECT * FROM %v WHERE slug=?", segmentsTable)
+	err := r.db.Get(&segment, query, slug)
+	if err != nil {
+		return false, segment, err
+	}
+
+	return true, segment, nil
+}
+
 func (r *SegmentRepository) CreateSegment(segment backendTraineeAssignment2023.Segment) (string, error) {
 	if exists, err := r.segmentExists(segment.Slug); err != nil {
 		return "", err

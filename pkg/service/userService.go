@@ -13,6 +13,14 @@ func NewUserService(repo repository.User) *UserService {
 	return &UserService{repo: repo}
 }
 
+func (s *UserService) GetAllUsers() ([]backendTraineeAssignment2023.User, error) {
+	return s.repo.GetAllUsers()
+}
+
+func (s *UserService) GetUserById(id int) (bool, backendTraineeAssignment2023.User, error) {
+	return s.repo.GetUserById(id)
+}
+
 func (s *UserService) CreateUser(user backendTraineeAssignment2023.User) (int, error) {
 	return s.repo.CreateUser(user)
 }
