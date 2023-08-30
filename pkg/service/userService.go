@@ -36,3 +36,6 @@ func (s *UserService) UpdateUserById(slugsToJoin []string, slugsToLeave []string
 func (s *UserService) GetUserSegments(id int) ([]string, error) {
 	return s.repo.GetUserSegments(id)
 }
+func (s *UserService) GetUserLog(id int, period string) (bool, []backendTraineeAssignment2023.LogEntry, error) {
+	return s.repo.GetUserLog(id, period)
+}

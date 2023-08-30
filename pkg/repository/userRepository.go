@@ -44,6 +44,51 @@ func (r *UserRepository) GetAllUsers() ([]backendTraineeAssignment2023.User, err
 
 	return users, nil
 }
+func (r *UserRepository) GetUserLog(id int, period string) (bool, []backendTraineeAssignment2023.LogEntry, error) {
+	exists, err := r.userExists(id)
+	if err != nil {
+		return false, nil, err
+	}
+	if exists {
+		var logs []backendTraineeAssignment2023.LogEntry
+
+		periodTime, err := time.Parse("2006-01", period)
+		if err != nil {
+			return false, nil, err
+		}
+		startDate := periodTime
+		endDate := periodTime.AddDate(0, 1, 0).Add(-time.Second)
+
+		query := fmt.Sprintf("SELECT user_id, segment_id, action, datetime FROM %v WHERE user_id = ? AND datetime >= ? AND datetime <= ?", segmentsUsersLogTable)
+
+		rows, err := r.db.Queryx(query, id, startDate, endDate)
+		if err != nil {
+			return false, nil, err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var log backendTraineeAssignment2023.LogEntry
+			var datetime string
+
+			err := rows.Scan(&log.UserID, &log.SegmentID, &log.Action, &datetime)
+			if err != nil {
+				return false, nil, err
+			}
+
+			log.Datetime, err = time.Parse("2006-01-02 15:04:05", datetime)
+			if err != nil {
+				return false, nil, err
+			}
+
+			logs = append(logs, log)
+		}
+
+		return true, logs, nil
+	} else {
+		return false, nil, nil
+	}
+}
 
 func (r *UserRepository) GetUserById(id int) (bool, backendTraineeAssignment2023.User, error) {
 	if exists, err := r.userExists(id); err != nil {
