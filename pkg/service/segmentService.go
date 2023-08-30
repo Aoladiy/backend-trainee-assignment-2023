@@ -21,8 +21,8 @@ func (s *SegmentService) GetSegmentBySlug(slug string) (bool, backendTraineeAssi
 	return s.repo.GetSegmentBySlug(slug)
 }
 
-func (s *SegmentService) CreateSegment(segment backendTraineeAssignment2023.Segment) (string, error) {
-	return s.repo.CreateSegment(segment)
+func (s *SegmentService) CreateSegment(segment backendTraineeAssignment2023.Segment, autoAssignPercentage int) (string, error) {
+	return s.repo.CreateSegment(segment, autoAssignPercentage)
 }
 
 func (s *SegmentService) DeleteSegment(slug string) (bool, string, error) {

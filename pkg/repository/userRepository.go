@@ -7,6 +7,7 @@ import (
 	backendTraineeAssignment2023 "github.com/Aoladiy/backend-trainee-assignment-2023"
 	"github.com/jmoiron/sqlx"
 	"strconv"
+	"time"
 )
 
 type UserRepository struct {
@@ -42,6 +43,51 @@ func (r *UserRepository) GetAllUsers() ([]backendTraineeAssignment2023.User, err
 	}
 
 	return users, nil
+}
+func (r *UserRepository) GetUserLog(id int, period string) (bool, []backendTraineeAssignment2023.LogEntry, error) {
+	exists, err := r.userExists(id)
+	if err != nil {
+		return false, nil, err
+	}
+	if exists {
+		var logs []backendTraineeAssignment2023.LogEntry
+
+		periodTime, err := time.Parse("2006-01", period)
+		if err != nil {
+			return false, nil, err
+		}
+		startDate := periodTime
+		endDate := periodTime.AddDate(0, 1, 0).Add(-time.Second)
+
+		query := fmt.Sprintf("SELECT user_id, segment_id, action, datetime FROM %v WHERE user_id = ? AND datetime >= ? AND datetime <= ?", segmentsUsersLogTable)
+
+		rows, err := r.db.Queryx(query, id, startDate, endDate)
+		if err != nil {
+			return false, nil, err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var log backendTraineeAssignment2023.LogEntry
+			var datetime string
+
+			err := rows.Scan(&log.UserID, &log.SegmentID, &log.Action, &datetime)
+			if err != nil {
+				return false, nil, err
+			}
+
+			log.Datetime, err = time.Parse("2006-01-02 15:04:05", datetime)
+			if err != nil {
+				return false, nil, err
+			}
+
+			logs = append(logs, log)
+		}
+
+		return true, logs, nil
+	} else {
+		return false, nil, nil
+	}
 }
 
 func (r *UserRepository) GetUserById(id int) (bool, backendTraineeAssignment2023.User, error) {
@@ -126,14 +172,14 @@ func (r *UserRepository) DeleteUser(id int) (string, error) {
 	return strconv.Itoa(id), nil
 }
 
-func (r *UserRepository) UpdateUserById(slugsToJoin []string, slugsToLeave []string, id int) (bool, string, error) {
+func (r *UserRepository) UpdateUserById(slugsToJoin []string, slugsToLeave []string, id int, ttl time.Duration) (bool, string, error) {
 	if exists, err := r.userExists(id); err != nil {
 		return false, "fail", err
 	} else if !exists {
 		return false, fmt.Sprintf("there's no user with this id='%v'", id), nil
 	}
 
-	if len(slugsToJoin) == 0 && len(slugsToLeave) == 0 {
+	if len(slugsToJoin) == 0 && len(slugsToLeave) == 0 && ttl < 0 {
 		return true, "success (Nothing changed, did you really wanted it?)", nil
 	}
 	tx, err := r.db.Begin()
@@ -159,9 +205,22 @@ func (r *UserRepository) UpdateUserById(slugsToJoin []string, slugsToLeave []str
 			return false, "fail", err
 		}
 
+		var expirationTime interface{} = nil
+		if ttl < 0 {
+			expirationTime = nil
+		} else {
+			expirationTime = time.Now().Add(ttl)
+		}
 		if !exists {
-			query := fmt.Sprintf("INSERT INTO %v (user_id, segment_id) VALUES (?, ?)", segmentsUsersTable)
-			_, err = tx.Exec(query, id, segmentID)
+			query := fmt.Sprintf("INSERT INTO %v (user_id, segment_id, expiration_time) VALUES (?, ?, ?)", segmentsUsersTable)
+			_, err = tx.Exec(query, id, segmentID, expirationTime)
+			if err != nil {
+				tx.Rollback()
+				return false, "fail", err
+			}
+		} else {
+			query := fmt.Sprintf("UPDATE %v SET expiration_time = ? WHERE user_id = ? AND segment_id = ?", segmentsUsersTable)
+			_, err = tx.Exec(query, expirationTime, id, segmentID)
 			if err != nil {
 				tx.Rollback()
 				return false, "fail", err
