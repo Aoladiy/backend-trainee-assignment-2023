@@ -13,6 +13,7 @@ type User interface {
 	DeleteUser(id int) (string, error)
 	UpdateUserById(slugsToJoin []string, slugsToLeave []string, id int, ttl time.Duration) (bool, string, error)
 	GetUserSegments(id int) ([]string, error)
+	GetUserLog(id int, period string) (bool, []backendTraineeAssignment2023.LogEntry, error)
 }
 
 type Segment interface {
