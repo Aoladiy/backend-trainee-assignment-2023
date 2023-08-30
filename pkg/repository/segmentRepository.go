@@ -59,17 +59,27 @@ func (r *SegmentRepository) GetSegmentBySlug(slug string) (bool, backendTraineeA
 	return true, segment, nil
 }
 
-func (r *SegmentRepository) CreateSegment(segment backendTraineeAssignment2023.Segment) (string, error) {
+func (r *SegmentRepository) CreateSegment(segment backendTraineeAssignment2023.Segment, autoAssignPercentage int) (string, error) {
 	if exists, err := r.segmentExists(segment.Slug); err != nil {
 		return "", err
 	} else if exists {
-		return fmt.Sprintf("there's already segment with this slug='%v'", segment.Slug), nil
+		return fmt.Sprintf("there's already a segment with this slug='%v'", segment.Slug), nil
 	}
 
 	query := fmt.Sprintf("INSERT INTO %v (slug) VALUES (?)", segmentsTable)
 	_, err := r.db.Exec(query, segment.Slug)
 	if err != nil {
 		return "", err
+	}
+	if autoAssignPercentage > 0 && autoAssignPercentage <= 100 {
+		segmentID, err := r.getSegmentIDBySlug(segment.Slug)
+		if err != nil {
+			return "", err
+		}
+		_, err = r.getAutoAssignedUsers(segmentID, autoAssignPercentage)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	return segment.Slug, nil
@@ -102,4 +112,54 @@ func (r *SegmentRepository) segmentExists(slug string) (bool, error) {
 	} else {
 		return true, nil
 	}
+}
+func (r *SegmentRepository) getSegmentIDBySlug(slug string) (int, error) {
+	var segmentID int
+	var query string
+
+	query = fmt.Sprintf("SELECT id FROM %v WHERE slug = ?", segmentsTable)
+
+	row := r.db.QueryRow(query, slug)
+	if err := row.Scan(&segmentID); err != nil {
+		return 0, err
+	}
+
+	return segmentID, nil
+}
+func (r *SegmentRepository) getAutoAssignedUsers(segmentID int, autoAssignPercentage int) ([]int, error) {
+	var userIDs []int
+
+	totalUserCountQuery := fmt.Sprintf("SELECT COUNT(*) FROM %v", usersTable)
+	var totalUserCount int
+	err := r.db.Get(&totalUserCount, totalUserCountQuery)
+	if err != nil {
+		return []int{}, err
+	}
+	numUsersToAutoAssign := int(float64(autoAssignPercentage) / 100 * float64(totalUserCount))
+
+	query := fmt.Sprintf("SELECT id FROM %v ORDER BY RAND() LIMIT ?", usersTable)
+	rows, err := r.db.Query(query, numUsersToAutoAssign)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var userID int
+		if err = rows.Scan(&userID); err != nil {
+			return nil, err
+		}
+		userIDs = append(userIDs, userID)
+		query := fmt.Sprintf("INSERT INTO %v (user_id, segment_id) VALUES (?, ?)", segmentsUsersTable)
+		_, err := r.db.Exec(query, userID, segmentID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return userIDs, nil
 }

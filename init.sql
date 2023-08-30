@@ -19,7 +19,7 @@ create table segments_users
     user_id        int(15) not null,
     segment_id     int(15) not null,
     expiration_time DATETIME,
-    foreign key (user_id) references users (id),
-    foreign key (segment_id) references segments (id),
+    foreign key (user_id) references users (id) on delete cascade,
+    foreign key (segment_id) references segments (id) on delete cascade,
     primary key (user_id, segment_id)
 );

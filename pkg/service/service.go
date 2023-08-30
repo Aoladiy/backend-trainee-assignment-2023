@@ -18,7 +18,7 @@ type User interface {
 type Segment interface {
 	GetAllSegments() ([]backendTraineeAssignment2023.Segment, error)
 	GetSegmentBySlug(slug string) (bool, backendTraineeAssignment2023.Segment, error)
-	CreateSegment(segment backendTraineeAssignment2023.Segment) (string, error)
+	CreateSegment(segment backendTraineeAssignment2023.Segment, autoAssignPercentage int) (string, error)
 	DeleteSegment(slug string) (bool, string, error)
 }
 type Service struct {
