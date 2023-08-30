@@ -3,41 +3,29 @@
     <li>(optional) change ports in docker-compose.yml if they are already in use</li>
     <li>docker-compose build</li>
     <li>docker-compose up -d</li>
-    <li>try to start container with app when container with db will be ready
+    <li>
+        test the app
         <ul>
-            <li>docker ps -a (with this command you can see container ids)</li>
-            <li>docker start {insert here container id which have image backend-trainee-assignment-2023-go}</li>
-        </ul>
-    </li>
-    <li>when container with db will be ready
-        <ul>
-            <li>docker ps -a (with this command you can see container ids)</li>
-            <li>docker exec -it {insert here container id which have image mysql:8.0} mysql -uroot -proot</li>
             <li>
-<pre>
-use dockermysql;
-CREATE EVENT cleanup_expired_segments
-ON SCHEDULE EVERY 1 SECOND
-ON COMPLETION PRESERVE
-DO DELETE FROM segments_users WHERE expiration_time <= NOW();
-</pre>
+                if you have "Could not get response" problem when trying<br>
+                to send http request, just wait a few moments<br>
+                (something about 10-60 seconds).<br>
+                It may take a time to start db
             </li>
             <li>
-<pre>
-CREATE TRIGGER segments_users_insert_trigger
-AFTER INSERT ON segments_users
-FOR EACH ROW INSERT INTO segments_users_log (user_id, segment_id, action, datetime) VALUES (NEW.user_id, NEW.segment_id, 'insert', NOW());
-</pre>
+                you can import<br>
+                examples of http requests into postman<br>
+                using backend-trainee-assignment-2023.postman_collection.json<br>
+                in the project
             </li>
             <li>
-<pre>
-CREATE TRIGGER segments_users_delete_trigger
-AFTER DELETE ON segments_users
-FOR EACH ROW INSERT INTO segments_users_log (user_id, segment_id, action, datetime) VALUES (OLD.user_id, OLD.segment_id, 'delete', NOW());
-</pre>
+                pay attention to the http body in several requests<br>
+                there are some parameters or/and response
             </li>
             <li>
-                exit
+                note that if you want to download csv file from <br>
+                get user log request you should tap Send and Download<br>
+                instead of just Send
             </li>
         </ul>
     </li>

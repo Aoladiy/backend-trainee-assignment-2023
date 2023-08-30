@@ -34,3 +34,13 @@ create table segments_users_log
     foreign key (user_id) references users (id) on delete cascade,
     foreign key (segment_id) references segments (id) on delete cascade
 );
+CREATE DEFINER=`root`@`%` TRIGGER segments_users_insert_trigger
+    AFTER INSERT ON segments_users
+    FOR EACH ROW INSERT INTO segments_users_log (user_id, segment_id, action, datetime) VALUES (NEW.user_id, NEW.segment_id, 'insert', NOW());
+CREATE DEFINER=`root`@`%` TRIGGER segments_users_delete_trigger
+    AFTER DELETE ON segments_users
+    FOR EACH ROW INSERT INTO segments_users_log (user_id, segment_id, action, datetime) VALUES (OLD.user_id, OLD.segment_id, 'delete', NOW());
+CREATE DEFINER=`root`@`%` EVENT cleanup_expired_segments
+    ON SCHEDULE EVERY 1 SECOND
+    ON COMPLETION PRESERVE
+    DO DELETE FROM segments_users WHERE expiration_time <= NOW();
