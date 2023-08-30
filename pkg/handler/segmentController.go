@@ -5,6 +5,7 @@ import (
 	backendTraineeAssignment2023 "github.com/Aoladiy/backend-trainee-assignment-2023"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 )
 
 func (h *Handler) getAllSegments(c *gin.Context) {
@@ -34,7 +35,11 @@ func (h *Handler) getSegmentBySlug(c *gin.Context) {
 	}
 }
 func (h *Handler) createSegment(c *gin.Context) {
-	var input backendTraineeAssignment2023.Segment
+	var input struct {
+		Id                   int
+		Slug                 string
+		AutoAssignPercentage string
+	}
 	var firstError error = nil
 
 	if firstError = c.BindJSON(&input); firstError != nil {
@@ -47,20 +52,53 @@ func (h *Handler) createSegment(c *gin.Context) {
 			return
 		}
 	}
-	if firstError == nil {
-		if input.Slug == "" {
+	if input.AutoAssignPercentage == "" {
+		segment := backendTraineeAssignment2023.Segment{
+			Id:   input.Id,
+			Slug: input.Slug,
+		}
+		if firstError == nil {
+			if input.Slug == "" {
+				c.JSON(http.StatusOK, map[string]interface{}{
+					"message": "slug must not be empty",
+				})
+			} else {
+				slug, err := h.services.CreateSegment(segment, 0)
+				if err != nil {
+					NewErrorResponse(c, http.StatusInternalServerError, err.Error())
+					return
+				}
+				c.JSON(http.StatusOK, map[string]interface{}{
+					"message": slug,
+				})
+			}
+		}
+	} else {
+		if autoAssignPercentage, err := strconv.Atoi(input.AutoAssignPercentage); err != nil {
 			c.JSON(http.StatusOK, map[string]interface{}{
-				"message": "slug must not be empty",
+				"message": "autoAssignPercentage must be integer",
 			})
 		} else {
-			slug, err := h.services.CreateSegment(input)
-			if err != nil {
-				NewErrorResponse(c, http.StatusInternalServerError, err.Error())
-				return
+			segment := backendTraineeAssignment2023.Segment{
+				Id:   input.Id,
+				Slug: input.Slug,
 			}
-			c.JSON(http.StatusOK, map[string]interface{}{
-				"message": slug,
-			})
+			if firstError == nil {
+				if input.Slug == "" {
+					c.JSON(http.StatusOK, map[string]interface{}{
+						"message": "slug must not be empty",
+					})
+				} else {
+					slug, err := h.services.CreateSegment(segment, autoAssignPercentage)
+					if err != nil {
+						NewErrorResponse(c, http.StatusInternalServerError, err.Error())
+						return
+					}
+					c.JSON(http.StatusOK, map[string]interface{}{
+						"message": slug,
+					})
+				}
+			}
 		}
 	}
 }
