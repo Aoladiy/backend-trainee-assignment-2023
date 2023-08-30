@@ -1,3 +1,11 @@
+All tasks complete
+<ol>
+    <li>main task</li>
+    <li>first additional task</li>
+    <li>second additional task</li>
+    <li>third additional task</li>
+</ol>
+How to start project
 <ol>
     <li>create file .env with content like in .env.example</li>
     <li>(optional) change ports in docker-compose.yml if they are already in use</li>
