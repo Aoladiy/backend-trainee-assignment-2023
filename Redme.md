@@ -1,10 +1,34 @@
-1. create file .env with content like in .env.example
+<ol>
+<li>create file .env with content like in .env.example</li>
 
-2. (optional) change ports in docker-compose.yml if they are already in use
+<li>(optional) change ports in docker-compose.yml if they are already in use</li>
 
-3. docker-compose build
+<li>docker-compose build</li>
 
-4. docker-compose up -d
+<li>docker-compose up -d</li>
 
-5. try to start container with app when container with db will be ready
-(1. docker ps -a 2. docker start {insert here container id which have image backend-trainee-assignment-2023-go})
+<li>try to start container with app when container with db will be ready
+    <ul>
+        <li>docker ps -a (with this command you can see container ids)</li>
+        <li>docker start {insert here container id which have image backend-trainee-assignment-2023-go}</li>
+    </ul>
+</li>
+<li>when container with db will be ready
+    <ul>
+        <li>docker ps -a (with this command you can see container ids)</li>
+        <li>docker exec -it {insert here container id which have image mysql:8.0} mysql -uroot -proot</li>
+        <li>
+<pre>
+use dockermysql;
+CREATE EVENT cleanup_expired_segments
+ON SCHEDULE EVERY 1 SECOND
+ON COMPLETION PRESERVE
+DO DELETE FROM segments_users WHERE expiration_time <= NOW();
+</pre>
+            </li>
+            <li>
+                exit
+            </li>
+        </ul>
+    </li>
+</ol>

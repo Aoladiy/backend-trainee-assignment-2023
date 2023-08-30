@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func (h *Handler) getAllUsers(c *gin.Context) {
@@ -84,6 +85,7 @@ func (h *Handler) updateUserById(c *gin.Context) {
 	var input struct {
 		SegmentsToJoin  []string `json:"segmentsToJoin"`
 		SegmentsToLeave []string `json:"segmentsToLeave"`
+		TimeToLeave     string   `json:"timeToLeave"`
 	}
 
 	if err := c.BindJSON(&input); err != nil {
@@ -93,15 +95,35 @@ func (h *Handler) updateUserById(c *gin.Context) {
 		}
 	}
 
-	_, message, err := h.services.UpdateUserById(input.SegmentsToJoin, input.SegmentsToLeave, id)
-	if err != nil {
-		NewErrorResponse(c, http.StatusInternalServerError, err.Error())
-		return
-	}
+	if input.TimeToLeave == "" {
+		_, message, err := h.services.UpdateUserById(input.SegmentsToJoin, input.SegmentsToLeave, id, -time.Second)
+		if err != nil {
+			NewErrorResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
 
-	c.JSON(http.StatusOK, map[string]interface{}{
-		"message": message,
-	})
+		c.JSON(http.StatusOK, map[string]interface{}{
+			"message": message,
+		})
+	} else {
+		timeToLeave, err := time.ParseDuration(input.TimeToLeave)
+		if err != nil {
+			c.JSON(http.StatusOK, map[string]interface{}{
+				"message": err.Error(),
+			})
+		} else {
+
+			_, message, err := h.services.UpdateUserById(input.SegmentsToJoin, input.SegmentsToLeave, id, timeToLeave)
+			if err != nil {
+				NewErrorResponse(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+
+			c.JSON(http.StatusOK, map[string]interface{}{
+				"message": message,
+			})
+		}
+	}
 }
 
 func (h *Handler) deleteUserById(c *gin.Context) {

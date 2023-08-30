@@ -16,9 +16,10 @@ create table segments
 );
 create table segments_users
 (
-    user_id    int(15) not null,
-    segment_id int(15) not null,
+    user_id        int(15) not null,
+    segment_id     int(15) not null,
+    expiration_time DATETIME,
     foreign key (user_id) references users (id),
     foreign key (segment_id) references segments (id),
     primary key (user_id, segment_id)
-)
+);
