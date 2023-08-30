@@ -3,6 +3,7 @@ package service
 import (
 	backendTraineeAssignment2023 "github.com/Aoladiy/backend-trainee-assignment-2023"
 	"github.com/Aoladiy/backend-trainee-assignment-2023/pkg/repository"
+	"time"
 )
 
 type User interface {
@@ -10,7 +11,7 @@ type User interface {
 	GetUserById(id int) (bool, backendTraineeAssignment2023.User, error)
 	CreateUser(user backendTraineeAssignment2023.User) (int, error)
 	DeleteUser(id int) (string, error)
-	UpdateUserById(slugsToJoin []string, slugsToLeave []string, id int) (bool, string, error)
+	UpdateUserById(slugsToJoin []string, slugsToLeave []string, id int, ttl time.Duration) (bool, string, error)
 	GetUserSegments(id int) ([]string, error)
 }
 

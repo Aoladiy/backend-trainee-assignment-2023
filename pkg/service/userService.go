@@ -3,6 +3,7 @@ package service
 import (
 	backendTraineeAssignment2023 "github.com/Aoladiy/backend-trainee-assignment-2023"
 	"github.com/Aoladiy/backend-trainee-assignment-2023/pkg/repository"
+	"time"
 )
 
 type UserService struct {
@@ -29,8 +30,8 @@ func (s *UserService) DeleteUser(id int) (string, error) {
 	return s.repo.DeleteUser(id)
 }
 
-func (s *UserService) UpdateUserById(slugsToJoin []string, slugsToLeave []string, id int) (bool, string, error) {
-	return s.repo.UpdateUserById(slugsToJoin, slugsToLeave, id)
+func (s *UserService) UpdateUserById(slugsToJoin []string, slugsToLeave []string, id int, ttl time.Duration) (bool, string, error) {
+	return s.repo.UpdateUserById(slugsToJoin, slugsToLeave, id, ttl)
 }
 func (s *UserService) GetUserSegments(id int) ([]string, error) {
 	return s.repo.GetUserSegments(id)
